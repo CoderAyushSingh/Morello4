@@ -12,12 +12,16 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
-  const { user, logout } = useAuth();
+  const { user, userProfile, logout } = useAuth();
   const { t } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
   const profileMenuRef = React.useRef<HTMLDivElement>(null);
+
+  // Derive display values from Supabase profile first, then Firebase user
+  const displayPhoto = userProfile?.photoURL || user?.photoURL;
+  const displayName = userProfile?.firstName || user?.displayName || user?.email?.split('@')[0] || 'User';
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -102,17 +106,18 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
           >
             <Search className="w-5 h-5 group-hover:scale-110 transition-transform" />
           </button>
+
           {user ? (
             <div className="relative z-50" ref={profileMenuRef}>
               <div
                 className="w-9 h-9 rounded-full bg-black border border-zinc-700 flex items-center justify-center text-white font-bold text-sm uppercase tracking-wider shadow-lg shadow-black/50 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-110 hover:border-zinc-500"
-                title={user.displayName || user.email || 'User'}
+                title={displayName}
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
               >
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                {displayPhoto ? (
+                  <img src={displayPhoto} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  user.displayName ? user.displayName.charAt(0) : (user.email ? user.email.charAt(0) : 'U')
+                  displayName.charAt(0).toUpperCase()
                 )}
               </div>
 

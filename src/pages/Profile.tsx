@@ -9,7 +9,19 @@ interface ProfileProps {
 }
 
 const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
-    const { user, userProfile, loading } = useAuth();
+    const { user, userProfile, loading, refreshProfile } = useAuth();
+
+    // Fetch latest profile data when component mounts to ensure sync
+    useEffect(() => {
+        if (refreshProfile) {
+            refreshProfile();
+        }
+    }, []);
+
+    useEffect(() => {
+        console.log("👤 Profile Page Rendered. userProfile:", userProfile);
+        console.log("👤 Profile Page Rendered. user:", user);
+    }, [userProfile, user]);
 
     // Use profile from context, or fall back to user metadata if profile is somehow missing
     const displayProfile = {

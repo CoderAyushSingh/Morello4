@@ -46,5 +46,8 @@ export const tmdbService = {
     fetchTMDB(`/discover/${type}`, params),
 
   getGenres: (type: 'movie' | 'tv') =>
-    fetchTMDB(`/genre/${type}/list`)
+    fetchTMDB(`/genre/${type}/list`),
+
+  getWatchProviders: (type: 'movie' | 'tv') =>
+    fetchTMDB(`/watch/providers/${type}`, { watch_region: 'IN' })
 };

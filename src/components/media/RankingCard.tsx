@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Movie } from '../../types';
 import { IMAGE_BASE_URL } from '../../services/tmdb';

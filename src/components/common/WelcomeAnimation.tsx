@@ -25,6 +25,12 @@ const WelcomeAnimation: React.FC<WelcomeAnimationProps> = ({ onComplete }) => {
         '/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg'  // Parasite
     ];
 
+    const onCompleteRef = React.useRef(onComplete);
+
+    useEffect(() => {
+        onCompleteRef.current = onComplete;
+    }, [onComplete]);
+
     useEffect(() => {
         // Shuffle and set posters
         setPosters(POSTER_PATHS.sort(() => 0.5 - Math.random()));
@@ -33,7 +39,11 @@ const WelcomeAnimation: React.FC<WelcomeAnimationProps> = ({ onComplete }) => {
         const timer2 = setTimeout(() => setStage(2), 1000); // Logo & Particles
         const timer3 = setTimeout(() => setStage(3), 2200); // Text Reveal
         const timer4 = setTimeout(() => setStage(4), 3500); // Exit
-        const timer5 = setTimeout(() => onComplete(), 4000); // Unmount
+        const timer5 = setTimeout(() => {
+            if (onCompleteRef.current) {
+                onCompleteRef.current();
+            }
+        }, 4000); // Unmount
 
         return () => {
             clearTimeout(timer1);
@@ -42,7 +52,7 @@ const WelcomeAnimation: React.FC<WelcomeAnimationProps> = ({ onComplete }) => {
             clearTimeout(timer4);
             clearTimeout(timer5);
         };
-    }, [onComplete]);
+    }, []);
 
     return (
         <div className={`fixed inset-0 z-[200] bg-black overflow-hidden flex items-center justify-center transition-opacity duration-1000 ${stage === 4 ? 'opacity-0' : 'opacity-100'}`}>

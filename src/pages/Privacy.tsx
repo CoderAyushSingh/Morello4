@@ -1,158 +1,300 @@
 import React from 'react';
-import { Shield, Lock, Eye, FileText, Globe, Bell, CheckCircle } from 'lucide-react';
-
-interface PolicySectionProps {
-    image: string;
-    icon: React.ReactNode;
-    title: string;
-    content: React.ReactNode;
-    reverse: boolean;
-    color: string;
-}
-
-const PolicySection: React.FC<PolicySectionProps> = ({ image, icon, title, content, reverse, color }) => {
-    return (
-        <div className={`relative rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 p-8 md:p-16 flex flex-col items-center gap-12 group ${reverse ? 'md:flex-row-reverse' : 'md:flex-row'}`}>
-            <div className="absolute inset-0">
-                <img src={image} className="w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity duration-700" alt={title} />
-                <div className={`absolute inset-0 bg-gradient-to-r ${reverse ? 'from-black via-black/80 to-transparent' : 'from-transparent via-black/80 to-black'}`}></div>
-            </div>
-
-            <div className="relative z-10 flex-1 space-y-6">
-                <div className="flex items-center gap-4 mb-2">
-                    <div className={`p-3 rounded-full bg-${color}-500/20 text-${color}-400`}>
-                        {icon}
-                    </div>
-                    <h2 className="text-3xl font-bold tracking-tight text-white">{title}</h2>
-                </div>
-                <div className="text-zinc-400 text-lg leading-relaxed font-light">
-                    {content}
-                </div>
-            </div>
-
-            {/* Spacer for visual balance if needed, or just let flex handle it */}
-            <div className="hidden md:block flex-1"></div>
-        </div>
-    );
-};
+import { Shield, Lock, Eye, FileText, Globe, Cookie, Share2, Server, UserCheck, AlertTriangle, Calendar, Mail, Scale } from 'lucide-react';
 
 const Privacy: React.FC = () => {
     return (
-        <div className="bg-black text-white min-h-screen font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
-            {/* 🔒 Hero Section */}
-            <section className="relative h-[40vh] w-full flex flex-col items-center justify-center text-center px-4 overflow-hidden border-b border-white/10">
-                <div className="absolute inset-0">
-                    <img
-                        src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80"
-                        alt="Security Vault"
-                        className="w-full h-full object-cover opacity-60"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/80" />
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black/40 to-black"></div>
+        <div className="bg-black text-white min-h-screen font-sans selection:bg-emerald-500/30 selection:text-emerald-200 pt-24 pb-20">
+            <div className="max-w-4xl mx-auto px-6 md:px-12">
+
+                {/* Header */}
+                <div className="mb-16 text-center">
+                    <div className="flex justify-center mb-6">
+                        <div className="p-4 rounded-full bg-zinc-900 border border-zinc-800">
+                            <Shield className="w-10 h-10 text-emerald-500" />
+                        </div>
+                    </div>
+                    <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-4">Privacy Policy for Morello</h1>
+                    <p className="text-zinc-500 text-sm uppercase tracking-widest font-bold">Last Updated: January 07, 2026</p>
                 </div>
 
-                <div className="relative z-10 max-w-4xl mx-auto space-y-6 animate-fadeInUp">
-                    <div className="flex items-center justify-center gap-3 text-emerald-500 mb-4">
-                        <Shield size={20} />
-                        <span className="text-xs font-bold tracking-[0.3em] uppercase">Data Protection</span>
-                    </div>
-                    <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter text-white drop-shadow-2xl">
-                        Privacy<br />Policy
-                    </h1>
-                    <p className="text-zinc-400 text-lg md:text-xl font-light max-w-2xl mx-auto leading-relaxed mt-4">
-                        We are committed to protecting your personal data and ensuring a secure experience. Last updated: January 04, 2026.
+                {/* Introduction */}
+                <div className="prose prose-invert max-w-none text-zinc-400 mb-12 leading-relaxed">
+                    <p>
+                        Welcome to Morello. Your privacy is extremely important to us. This Privacy Policy document explains how Morello collects, uses, protects, and discloses information when you use our website, mobile application, and related services (collectively, the “Platform”).
+                    </p>
+                    <p>
+                        By accessing or using Morello, you agree to the terms described in this Privacy Policy.
                     </p>
                 </div>
-            </section>
 
-            {/* 📜 Policy Sections */}
-            <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-24 space-y-32">
+                {/* Sections */}
+                <div className="space-y-12">
+                    <Section
+                        icon={FileText}
+                        title="1. Information We Collect"
+                        color="blue"
+                        content={
+                            <div className="space-y-6">
+                                <p className="text-zinc-400">We collect different types of information to provide and improve our services.</p>
 
-                {/* Section 1: Data Collection */}
-                <PolicySection
-                    image="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80"
-                    icon={<FileText className="text-blue-400" size={32} />}
-                    title="Data Collection"
-                    color="blue"
-                    content={
-                        <>
-                            <p>We collect minimal data necessary to optimize your experience. This includes usage metrics, device information, and preference settings.</p>
-                            <ul className="space-y-2 mt-4 text-zinc-400 text-sm">
-                                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-blue-500" /> Account configuration details</li>
-                                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-blue-500" /> Watchlist and history preferences</li>
-                                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-blue-500" /> Technical log data for debugging</li>
-                            </ul>
-                        </>
-                    }
-                    reverse={false}
-                />
+                                <SubSection title="1.1 Personal Information">
+                                    When you register or interact with Morello, we may collect:
+                                    <ul className="list-disc pl-5 mt-2 space-y-1 text-zinc-400">
+                                        <li>Full Name</li>
+                                        <li>Username</li>
+                                        <li>Email Address</li>
+                                        <li>Profile Photo</li>
+                                        <li>Date of Birth</li>
+                                        <li>Account Preferences</li>
+                                        <li>Login Credentials (encrypted)</li>
+                                    </ul>
+                                </SubSection>
 
-                {/* Section 2: Security */}
-                <PolicySection
-                    image="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&q=80"
-                    icon={<Lock className="text-emerald-400" size={32} />}
-                    title="Security Measures"
-                    color="emerald"
-                    content="Your security is our top priority. We employ end-to-end encryption, regular audits, and industry-standard security protocols to protect your information against unauthorized access, alteration, or destruction. We do not sell your personal data."
-                    reverse={true}
-                />
+                                <SubSection title="1.2 Automatically Collected Information">
+                                    When you use Morello, we automatically collect:
+                                    <ul className="list-disc pl-5 mt-2 space-y-1 text-zinc-400">
+                                        <li>IP Address</li>
+                                        <li>Device Type & Browser</li>
+                                        <li>Operating System</li>
+                                        <li>Pages Visited & Time Spent</li>
+                                        <li>Referring URLs</li>
+                                        <li>Cookies & Tracking Data</li>
+                                    </ul>
+                                </SubSection>
 
-                {/* Section 3: Analytics */}
-                <PolicySection
-                    image="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80"
-                    icon={<Eye className="text-violet-400" size={32} />}
-                    title="Detailed Analytics"
-                    color="violet"
-                    content="We utilize anonymous analytics to understand user behavior and improve functionality. These analytics are aggregated and cannot be used to identify individual users personally. You maintain full control over optional data sharing."
-                    reverse={false}
-                />
-
-                {/* Section 4: User Rights */}
-                <PolicySection
-                    image="https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&q=80"
-                    icon={<Shield className="text-amber-400" size={32} />}
-                    title="Your Rights"
-                    color="amber"
-                    content="You have the right to access, correct, or delete your personal data at any time. We support the 'Right to be Forgotten' and offer easy tools within your account settings to manage your privacy preferences and export your data."
-                    reverse={true}
-                />
-
-                {/* Section 5: Cookies */}
-                <PolicySection
-                    image="https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?auto=format&fit=crop&q=80"
-                    icon={<Globe className="text-cyan-400" size={32} />}
-                    title="Cookies & Tracking"
-                    color="cyan"
-                    content="We use essential cookies to maintain your session and security. Optional cookies help us remember your preferences and analyze site traffic to provide a better user experience. You can manage cookie settings in your browser."
-                    reverse={false}
-                />
-
-                {/* Section 6: Contact */}
-                <div className="relative rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 p-8 md:p-16 flex flex-col md:flex-row items-center gap-12 group">
-                    <div className="absolute inset-0">
-                        <img src="https://images.unsplash.com/photo-1596524430615-b46475ddff6e?auto=format&fit=crop&q=80" className="w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity duration-700" alt="Contact" />
-                        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent"></div>
-                    </div>
-
-                    <div className="relative z-10 flex-1 space-y-6">
-                        <div className="flex items-center gap-4 mb-2">
-                            <div className="p-3 bg-zinc-800/50 rounded-lg backdrop-blur-sm border border-zinc-700">
-                                <Bell className="text-rose-400" size={24} />
+                                <SubSection title="1.3 Content & Activity Data">
+                                    <ul className="list-disc pl-5 mt-2 space-y-1 text-zinc-400">
+                                        <li>Movies, series, or content you view</li>
+                                        <li>Watch history</li>
+                                        <li>Likes, ratings, reviews, and comments</li>
+                                        <li>Search queries</li>
+                                    </ul>
+                                </SubSection>
                             </div>
-                            <h2 className="text-3xl font-bold uppercase tracking-tight text-white">Contact & Updates</h2>
-                        </div>
-                        <p className="text-zinc-400 text-lg leading-relaxed max-w-xl">
-                            We may update this policy periodically. If you have questions about your data or these terms, please contact our Data Protection Officer.
-                        </p>
-                        <button className="px-8 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-zinc-200 transition-colors rounded-sm">
-                            Contact Support
-                        </button>
-                    </div>
-                </div>
+                        }
+                    />
 
+                    <Section
+                        icon={Cookie}
+                        title="2. Cookies & Tracking Technologies"
+                        color="amber"
+                        content={
+                            <>
+                                <p className="text-zinc-400 mb-4">Morello uses cookies and similar technologies to:</p>
+                                <ul className="list-disc pl-5 space-y-1 text-zinc-400 mb-4">
+                                    <li>Remember user preferences</li>
+                                    <li>Improve performance and user experience</li>
+                                    <li>Analyze traffic and usage behavior</li>
+                                    <li>Deliver personalized recommendations</li>
+                                </ul>
+                                <p className="text-zinc-500 text-sm italic">You can disable cookies via your browser settings, but some features may not function properly.</p>
+                            </>
+                        }
+                    />
+
+                    <Section
+                        icon={Eye}
+                        title="3. How We Use Your Information"
+                        color="emerald"
+                        content={
+                            <ul className="list-disc pl-5 space-y-1 text-zinc-400">
+                                <li>Create and manage user accounts</li>
+                                <li>Provide personalized content recommendations</li>
+                                <li>Improve platform performance and UI</li>
+                                <li>Communicate updates, notifications, and support</li>
+                                <li>Prevent fraud, abuse, and security risks</li>
+                                <li>Comply with legal obligations</li>
+                            </ul>
+                        }
+                    />
+
+                    <Section
+                        icon={Share2}
+                        title="4. Information Sharing & Disclosure"
+                        color="violet"
+                        content={
+                            <>
+                                <p className="text-zinc-400 font-bold mb-2">Morello does not sell your personal data.</p>
+                                <p className="text-zinc-400 mb-2">We may share information only with:</p>
+                                <ul className="list-disc pl-5 space-y-1 text-zinc-400 mb-4">
+                                    <li>Service Providers (hosting, analytics, authentication)</li>
+                                    <li>Legal Authorities (if required by law)</li>
+                                    <li>Business Transfers (mergers, acquisitions)</li>
+                                </ul>
+                                <p className="text-zinc-500 text-sm">All third parties are bound by confidentiality agreements.</p>
+                            </>
+                        }
+                    />
+
+                    <Section
+                        icon={Lock}
+                        title="5. Data Security"
+                        color="red"
+                        content={
+                            <>
+                                <p className="text-zinc-400 mb-2">We implement industry-standard security measures, including:</p>
+                                <ul className="list-disc pl-5 space-y-1 text-zinc-400 mb-4">
+                                    <li>Encrypted data storage</li>
+                                    <li>Secure authentication systems</li>
+                                    <li>Access control and monitoring</li>
+                                </ul>
+                                <p className="text-zinc-500 text-sm italic">However, no system is 100% secure. Users are responsible for keeping their login credentials confidential.</p>
+                            </>
+                        }
+                    />
+
+                    <Section
+                        icon={UserCheck}
+                        title="6. Children’s Privacy"
+                        color="pink"
+                        content={
+                            <p className="text-zinc-400">
+                                Morello does not knowingly collect data from children under 13.
+                                If you believe a child has provided personal data, please contact us immediately.
+                            </p>
+                        }
+                    />
+
+                    <Section
+                        icon={Globe}
+                        title="7. International Data Transfers"
+                        color="cyan"
+                        content={
+                            <p className="text-zinc-400">
+                                Your data may be processed and stored outside your country.
+                                By using Morello, you consent to such transfers in compliance with applicable laws.
+                            </p>
+                        }
+                    />
+
+                    <Section
+                        icon={Scale}
+                        title="8. Your Privacy Rights"
+                        color="indigo"
+                        content={
+                            <>
+                                <p className="text-zinc-400 mb-2">Depending on your location, you may have the right to:</p>
+                                <ul className="list-disc pl-5 space-y-1 text-zinc-400 mb-4">
+                                    <li>Access your personal data</li>
+                                    <li>Correct or update information</li>
+                                    <li>Request deletion of your account</li>
+                                    <li>Withdraw consent for data processing</li>
+                                </ul>
+                                <p className="text-zinc-500 text-sm">You can manage most of these options directly from your account settings.</p>
+                            </>
+                        }
+                    />
+
+                    <Section
+                        icon={Server}
+                        title="9. Data Retention"
+                        color="orange"
+                        content={
+                            <>
+                                <p className="text-zinc-400 mb-2">We retain your data only as long as necessary:</p>
+                                <ul className="list-disc pl-5 space-y-1 text-zinc-400">
+                                    <li>To provide services</li>
+                                    <li>To comply with legal obligations</li>
+                                    <li>To resolve disputes and enforce policies</li>
+                                </ul>
+                            </>
+                        }
+                    />
+
+                    <Section
+                        icon={AlertTriangle}
+                        title="10. Third-Party Links"
+                        color="yellow"
+                        content={
+                            <p className="text-zinc-400">
+                                Morello may contain links to third-party websites.
+                                We are not responsible for their privacy practices or content.
+                            </p>
+                        }
+                    />
+
+                    <Section
+                        icon={Calendar}
+                        title="11. Changes to This Privacy Policy"
+                        color="lime"
+                        content={
+                            <p className="text-zinc-400">
+                                We may update this Privacy Policy from time to time.
+                                Any changes will be posted on this page with an updated revision date.
+                                <br /><br />
+                                Continued use of Morello means you accept the updated policy.
+                            </p>
+                        }
+                    />
+
+                    <Section
+                        icon={Mail}
+                        title="12. Contact Us"
+                        color="rose"
+                        content={
+                            <>
+                                <p className="text-zinc-400 mb-4">If you have any questions or concerns about this Privacy Policy, please contact us:</p>
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-3 text-zinc-300">
+                                        <Mail size={16} />
+                                        <span>Email: <a href="mailto:support@morello.com" className="text-white hover:underline">support@morello.com</a></span>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-zinc-300">
+                                        <Globe size={16} />
+                                        <span>Website: <a href="https://morello.com" className="text-white hover:underline">https://morello.com</a></span>
+                                    </div>
+                                </div>
+                            </>
+                        }
+                    />
+
+                </div>
             </div>
         </div>
     );
 };
+
+// Map for dynamic colors to ensure Tailwind includes them
+const colorStyles: Record<string, { bg: string, text: string }> = {
+    blue: { bg: 'bg-blue-500/10', text: 'text-blue-500' },
+    amber: { bg: 'bg-amber-500/10', text: 'text-amber-500' },
+    emerald: { bg: 'bg-emerald-500/10', text: 'text-emerald-500' },
+    violet: { bg: 'bg-violet-500/10', text: 'text-violet-500' },
+    red: { bg: 'bg-red-500/10', text: 'text-red-500' },
+    pink: { bg: 'bg-pink-500/10', text: 'text-pink-500' },
+    cyan: { bg: 'bg-cyan-500/10', text: 'text-cyan-500' },
+    indigo: { bg: 'bg-indigo-500/10', text: 'text-indigo-500' },
+    orange: { bg: 'bg-orange-500/10', text: 'text-orange-500' },
+    yellow: { bg: 'bg-yellow-500/10', text: 'text-yellow-500' },
+    lime: { bg: 'bg-lime-500/10', text: 'text-lime-500' },
+    rose: { bg: 'bg-rose-500/10', text: 'text-rose-500' },
+};
+
+const Section = ({ icon: Icon, title, content, color }: { icon: any, title: string, content: React.ReactNode, color: string }) => {
+    const styles = colorStyles[color] || { bg: 'bg-zinc-500/10', text: 'text-zinc-500' };
+
+    return (
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-8 transition-colors hover:border-zinc-700">
+            <div className="flex items-center gap-4 mb-6">
+                <div className={`p-3 rounded-lg ${styles.bg} ${styles.text}`}>
+                    <Icon size={24} />
+                </div>
+                <h2 className="text-xl font-bold text-white tracking-tight">{title}</h2>
+            </div>
+            <div className="text-zinc-400 leading-relaxed pl-0 md:pl-[68px]">
+                {content}
+            </div>
+        </div>
+    );
+};
+
+const SubSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
+    <div className="bg-black/30 rounded-lg p-5 border border-zinc-800/50">
+        <h3 className="text-zinc-200 font-bold text-sm uppercase tracking-wide mb-3">{title}</h3>
+        <div className="text-sm">
+            {children}
+        </div>
+    </div>
+);
 
 export default Privacy;

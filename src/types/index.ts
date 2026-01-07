@@ -60,6 +60,7 @@ export interface Trailer {
   key: string;
   site: string;
   type: string;
+  name: string;
 }
 
 export interface Provider {

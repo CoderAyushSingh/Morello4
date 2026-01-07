@@ -9,7 +9,7 @@ interface ProfileSettingsProps {
 }
 
 const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onNavigate }) => {
-    const { user } = useAuth();
+    const { user, refreshProfile } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
@@ -88,16 +88,23 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onNavigate }) => {
         try {
             // We need to import uploadProfileImage, assume it is imported
             const { uploadProfileImage } = await import('../services/userService');
-            const downloadURL = await uploadProfileImage(user.uid, file);
+            const downloadURL = await uploadProfileImage(user.uid, file, user.email || undefined);
 
-            setFormData(prev => ({ ...prev, photoURL: downloadURL }));
+            // Append timestamp to force browser cache refresh
+            const urlWithTimestamp = `${downloadURL}?t=${new Date().getTime()}`;
+
+            setFormData(prev => ({
+                ...prev,
+                photoURL: urlWithTimestamp,
+                photoChangeCount: (prev.photoChangeCount || 0) + 1
+            }));
 
             // Should properly update Auth profile too if possible, but Firestore is key here
             // Verification log
             console.log("✅ Image uploaded:", downloadURL);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to upload image", error);
-            setErrorMessage("Failed to upload image.");
+            setErrorMessage(`Failed to upload image: ${error.message || 'Unknown error'}`);
         }
     };
 
@@ -123,12 +130,18 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onNavigate }) => {
                 }
 
                 // Check availability
-                const isAvailable = await checkUsernameAvailability(formData.username);
+                try {
+                    const isAvailable = await checkUsernameAvailability(formData.username);
 
-                if (!isAvailable) {
-                    setErrorMessage("Username is already taken.");
-                    setIsSaving(false);
-                    return;
+                    if (!isAvailable) {
+                        setErrorMessage("Username is already taken.");
+                        setIsSaving(false);
+                        return;
+                    }
+                } catch (err) {
+                    console.warn("Availability check failed, attempting to save anyway to let DB enforce uniqueness.", err);
+                    // We do NOT return here blindly anymore. We proceed to try to save.
+                    // If it is taken, updateUserProfile will throw "USERNAME_TAKEN".
                 }
 
                 updates.usernameChanged = true;
@@ -136,22 +149,39 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onNavigate }) => {
 
             console.log("Saving profile for:", user.uid); // Debug log
 
-            // FIRE AND FORGET: Start saving in background, don't wait for it
-            updateUserProfile(user.uid, updates).catch(err => {
-                console.error("❌ Background save failed", err);
-            });
+            // FIRE AND FORGET replaced with AWAIT
+            try {
+                await updateUserProfile(user.uid, updates);
 
-            // Update local state (optimistic)
-            if (updates.usernameChanged) {
-                setIsUsernameEditable(false);
-                setInitialUsername(formData.username);
-            }
+                // Update local state (optimistic)
+                if (updates.usernameChanged) {
+                    setIsUsernameEditable(false);
+                    setInitialUsername(formData.username);
+                }
 
-            setSuccessMessage('Profile saved successfully!');
+                // Sync with Global Auth Context
+                if (refreshProfile) {
+                    await refreshProfile();
+                }
 
-            // Navigate to home immediately
-            if (onNavigate) {
-                onNavigate('home');
+                setSuccessMessage('Profile saved successfully!');
+
+                // Navigate to home immediately after successful save
+                if (onNavigate) {
+                    // Small delay to let user see success message
+                    setTimeout(() => {
+                        onNavigate('home');
+                    }, 1000);
+                }
+            } catch (err: any) {
+                console.error("❌ Save failed", err);
+                if (err.message === "USERNAME_TAKEN") {
+                    setErrorMessage("Username is already taken.");
+                } else {
+                    // Show detailed error to confirm connection and reason
+                    setErrorMessage(`Database Error: ${err.message || 'Unknown error'}`);
+                }
+                setIsSaving(false);
             }
         } catch (error) {
             console.error("Failed to save profile", error);
@@ -189,10 +219,15 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onNavigate }) => {
                         onChange={handleImageUpload}
                         className="hidden"
                         accept="image/*"
+                        disabled={(formData.photoChangeCount || 0) >= 1}
                     />
                     <div
-                        className="relative group cursor-pointer"
-                        onClick={handleProfileClick}
+                        className={`relative group ${((formData.photoChangeCount || 0) >= 1) ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`}
+                        onClick={() => {
+                            if ((formData.photoChangeCount || 0) < 1) {
+                                handleProfileClick();
+                            }
+                        }}
                     >
                         <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-zinc-800 group-hover:border-zinc-500 transition-colors">
                             {formData.photoURL ? (
@@ -203,13 +238,19 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onNavigate }) => {
                                 </div>
                             )}
                         </div>
-                        <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Camera className="w-6 h-6 text-white" />
-                        </div>
+                        {((formData.photoChangeCount || 0) < 1) && (
+                            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Camera className="w-6 h-6 text-white" />
+                            </div>
+                        )}
                     </div>
                     <div>
                         <h3 className="text-lg font-bold">Profile photo</h3>
-                        <p className="text-zinc-500 text-sm">Upload a new profile photo</p>
+                        <p className="text-zinc-500 text-sm">
+                            {((formData.photoChangeCount || 0) >= 1)
+                                ? "You have reached the limit of profile photo changes."
+                                : "Upload a new profile photo (One-time change only)"}
+                        </p>
                     </div>
                 </div>
 

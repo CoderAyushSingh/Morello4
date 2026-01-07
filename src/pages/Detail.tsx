@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { tmdbService, ORIGINAL_IMAGE_URL, IMAGE_BASE_URL } from '../services/tmdb';
 import { CastMember, Movie, Trailer, Provider, CrewMember, DetailedMedia } from '../types';
 import MovieCard from '../components/media/MovieCard';
+import { Clock, Globe, Activity, Layers, Calendar, Languages, Tv, ExternalLink } from 'lucide-react';
 
 const Detail: React.FC<{
   id: number;
@@ -22,6 +23,33 @@ const Detail: React.FC<{
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
+  // Share Logic & Meta Tags
+  const shareMessage = React.useMemo(() => {
+    return encodeURIComponent(`🎥 Just discovered *${data?.title || ''}* on Morello!\n\n⭐ Rating: ${data?.vote_average ? data.vote_average.toFixed(1) : 'N/A'}/10\n${data?.overview ? `"${data.overview.slice(0, 80)}..."` : ''}\n\n🍿 Stream here: ${window.location.href}`);
+  }, [data]);
+
+  useEffect(() => {
+    if (!data) return;
+    const metaImage = document.querySelector('meta[property="og:image"]');
+    const metaTitle = document.querySelector('meta[property="og:title"]');
+
+    if (metaImage) metaImage.setAttribute('content', `${IMAGE_BASE_URL}${data.poster_path}`);
+    else {
+      const meta = document.createElement('meta');
+      meta.setAttribute('property', 'og:image');
+      meta.content = `${IMAGE_BASE_URL}${data.poster_path}`;
+      document.head.appendChild(meta);
+    }
+
+    if (metaTitle) metaTitle.setAttribute('content', `${data.title} - Morello`);
+    else {
+      const meta = document.createElement('meta');
+      meta.setAttribute('property', 'og:title');
+      meta.content = `${data.title} - Morello`;
+      document.head.appendChild(meta);
+    }
+  }, [data]);
+
   useEffect(() => {
     const loadDetails = async () => {
       setLoading(true);
@@ -39,9 +67,14 @@ const Detail: React.FC<{
         }, []).slice(0, 8);
         setCrew(keyCrew);
 
-        const video = (res.videos?.results || []).find((v: Trailer) => v.type === 'Trailer' && v.site === 'YouTube')
-          || (res.videos?.results || []).find((v: Trailer) => v.type === 'Teaser' && v.site === 'YouTube')
-          || (res.videos?.results || [])[0]
+        const videos = res.videos?.results || [];
+        const isValidTrailer = (v: Trailer) => !v.name.toLowerCase().includes('sign language');
+
+        const video = videos.find((v: Trailer) => v.site === 'YouTube' && v.type === 'Trailer' && v.name.includes('Official') && isValidTrailer(v))
+          || videos.find((v: Trailer) => v.site === 'YouTube' && v.type === 'Trailer' && isValidTrailer(v))
+          || videos.find((v: Trailer) => v.site === 'YouTube' && v.type === 'Teaser' && v.name.includes('Official') && isValidTrailer(v))
+          || videos.find((v: Trailer) => v.site === 'YouTube' && v.type === 'Teaser' && isValidTrailer(v))
+          || videos.find((v: Trailer) => v.site === 'YouTube' && isValidTrailer(v))
           || null;
         setTrailer(video);
         setRecommendations(res.recommendations?.results || []);
@@ -180,7 +213,7 @@ const Detail: React.FC<{
 
             {/* Overview */}
             <section className="space-y-6">
-              <h2 className="text-zinc-600 text-[10px] uppercase font-black tracking-[0.7em] border-l-2 border-white pl-6">The Narrative</h2>
+              <h2 className="text-zinc-600 text-[10px] uppercase font-black tracking-[0.7em] border-l-2 border-white pl-6">Overview</h2>
               <p className="text-zinc-100 text-xl md:text-2xl leading-relaxed font-light max-w-4xl">
                 {data.overview}
               </p>
@@ -188,7 +221,7 @@ const Detail: React.FC<{
 
             {/* Genre Section */}
             <section className="space-y-8">
-              <h2 className="text-zinc-600 text-[10px] uppercase font-black tracking-[0.7em] border-l-2 border-white pl-6">Genres & Vibe</h2>
+              <h2 className="text-zinc-600 text-[10px] uppercase font-black tracking-[0.7em] border-l-2 border-white pl-6">Genres</h2>
               <div className="flex flex-wrap gap-3">
                 {data.genres.map((g: any) => (
                   <span
@@ -243,51 +276,157 @@ const Detail: React.FC<{
           {/* ➡️ Right Column (Action & Specs) */}
           <aside className="space-y-12">
 
-            {/* Rating Display */}
-            <div className="bg-zinc-950 border border-zinc-900 p-8 rounded-sm space-y-6 shadow-xl">
-              <div className="flex items-center justify-between">
-                <span className="text-zinc-600 text-[10px] uppercase font-black tracking-[0.5em]">Critics Score</span>
-                <div className="bg-[#f5c518] text-black px-2 py-1 rounded-sm font-black text-[9px] tracking-tighter">IMDb</div>
+            {/* Rating Display - Circular UI */}
+            <div className="bg-zinc-950/50 border border-zinc-900/80 p-6 rounded-lg shadow-2xl backdrop-blur-sm relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-opacity">
+                <div className="text-6xl">⭐</div>
               </div>
-              <div className="space-y-1">
-                <div className="flex items-end gap-2">
-                  <span className="text-5xl font-bold text-white leading-none tracking-tighter">{(data.vote_average || 0).toFixed(1)}</span>
-                  <span className="text-zinc-800 text-xl mb-1 font-black">/ 10</span>
-                </div>
+
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-zinc-500 text-[10px] uppercase font-black tracking-[0.3em]">Rating</h3>
                 <div className="flex items-center gap-2">
-                  <div className="h-[1px] w-10 bg-white/20"></div>
-                  <p className="text-[9px] text-zinc-600 uppercase tracking-[0.3em] font-black">{(data.vote_count || 0).toLocaleString()} Reviews</p>
+                  <span className="bg-[#f5c518] text-black text-[9px] font-black px-1.5 py-0.5 rounded-[2px]">IMDb</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-6">
+                <div className="relative w-24 h-24">
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                    {/* Background Ring */}
+                    <path
+                      className="text-zinc-900"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                    />
+                    {/* Progress Ring */}
+                    <path
+                      className={`${(data.vote_average || 0) >= 7 ? 'text-emerald-500' : (data.vote_average || 0) >= 5 ? 'text-amber-500' : 'text-red-500'} transition-all duration-1000 ease-out`}
+                      strokeDasharray={`${(data.vote_average || 0) * 10}, 100`}
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-bold text-white tracking-tighter">{(data.vote_average || 0).toFixed(1)}</span>
+                    <span className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">/10</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <div className={`w-1.5 h-1.5 rounded-full ${(data.vote_average || 0) >= 7 ? 'bg-emerald-500' : 'bg-zinc-600'} animate-pulse`}></div>
+                      <span className="text-white text-sm font-bold tracking-tight">
+                        {(data.vote_average || 0) >= 8 ? 'Masterpiece' :
+                          (data.vote_average || 0) >= 7 ? 'Excellent' :
+                            (data.vote_average || 0) >= 5 ? 'Mixed' : 'Poor'}
+                      </span>
+                    </div>
+                    <p className="text-zinc-600 text-[10px] leading-relaxed max-w-[120px]">Based on global critic consensus.</p>
+                  </div>
+                  <div className="mt-1 pt-2 border-t border-white/5">
+                    <p className="text-zinc-500 text-[9px] font-mono">
+                      <span className="text-zinc-300 font-bold">{(data.vote_count || 0).toLocaleString()}</span> ratings
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* REFINED SHARE SECTION - Small Dark Premium Box */}
-            <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-sm space-y-5 shadow-2xl relative overflow-hidden">
-              <div className="flex items-center justify-between">
-                <p className="text-zinc-500 text-[8px] uppercase font-black tracking-[0.4em]">Curated Social</p>
-                <span className="text-[10px] opacity-40">●</span>
+            {/* REFINED SHARE SECTION - Curated Social Hub */}
+            <div className="bg-zinc-900/80 border border-zinc-800 p-6 rounded-sm space-y-6 shadow-2xl relative overflow-hidden backdrop-blur-md group">
+              <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
               </div>
 
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold uppercase tracking-tighter leading-none text-white">Share Masterpiece</h3>
-                <button
-                  onClick={handleShare}
-                  className="w-full bg-white text-black py-3 px-4 rounded-sm text-[9px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3 transition-all hover:bg-zinc-200"
-                >
-                  <span className="text-base">{copied ? '✓' : '🔗'}</span>
-                  <span>{copied ? 'Link Copied' : 'Public Link'}</span>
-                </button>
+              <div className="flex items-center justify-between relative z-10">
+                <p className="text-zinc-500 text-[8px] uppercase font-black tracking-[0.4em]">Social Era</p>
+                <div className="flex gap-1">
+                  <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span>
+                </div>
+              </div>
+
+              <div className="space-y-4 relative z-10">
+
+
+                <div className="grid grid-cols-4 gap-2">
+                  {/* Twitter / X */}
+                  <a
+                    href={`https://twitter.com/intent/tweet?text=${shareMessage}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-black border border-zinc-800 h-10 flex items-center justify-center rounded-sm hover:border-white hover:bg-zinc-900 transition-all text-white"
+                    title="Share on X"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+                  </a>
+
+                  {/* Facebook */}
+                  <a
+                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${shareMessage}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-black border border-zinc-800 h-10 flex items-center justify-center rounded-sm hover:border-[#1877F2] hover:text-[#1877F2] transition-all text-white"
+                    title="Share on Facebook"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                  </a>
+
+                  {/* WhatsApp */}
+                  <a
+                    href={`https://wa.me/?text=${shareMessage}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-black border border-zinc-800 h-10 flex items-center justify-center rounded-sm hover:border-[#25D366] hover:text-[#25D366] transition-all text-white"
+                    title="Share on WhatsApp"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                  </a>
+
+                  {/* Telegram */}
+                  <a
+                    href={`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${shareMessage}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-black border border-zinc-800 h-10 flex items-center justify-center rounded-sm hover:border-[#0088cc] hover:text-[#0088cc] transition-all text-white"
+                    title="Share on Telegram"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                  </a>
+                </div>
+
+                <div className="relative group/copy">
+                  <button
+                    onClick={handleShare}
+                    className="w-full bg-white text-black py-4 px-4 rounded-sm text-[9px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3 transition-all hover:bg-emerald-400"
+                  >
+                    <span>{copied ? 'Link Copied' : 'Copy Public Link'}</span>
+                    <span className="text-zinc-400 group-hover/copy:text-black transition-colors">{copied ? '✓' : '🔗'}</span>
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* WHERE TO WATCH - Premium Black UI */}
-            <div className="bg-black border border-zinc-900 p-8 rounded-sm space-y-8 relative overflow-hidden group">
-              <div className="flex items-center justify-between relative z-10">
-                <h3 className="text-zinc-500 text-[10px] uppercase font-black tracking-[0.5em]">Where to Watch</h3>
-                <span className="text-[9px] bg-zinc-900 text-zinc-400 px-3 py-1 rounded-full uppercase tracking-widest font-black border border-zinc-800">IN Region</span>
+            {/* WHERE TO WATCH - Premium Glass UI */}
+            <div className="bg-zinc-950/50 border border-zinc-900/80 p-8 rounded-lg shadow-2xl backdrop-blur-sm relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-opacity">
+                <Globe size={48} />
               </div>
 
-              <div className="space-y-3 relative z-10">
+              <div className="flex items-center justify-between mb-8 relative z-10">
+                <div className="flex items-center gap-3">
+                  <Tv size={18} className="text-zinc-500" />
+                  <h3 className="text-zinc-500 text-[10px] uppercase font-black tracking-[0.3em]">Where to Watch</h3>
+                </div>
+                <span className="text-[9px] bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full uppercase tracking-widest font-bold border border-emerald-500/20">IN Region</span>
+              </div>
+
+              <div className="space-y-4 relative z-10">
                 {providers.length > 0 ? (
                   <>
                     <div className="grid grid-cols-1 gap-3">
@@ -297,22 +436,20 @@ const Detail: React.FC<{
                           href={getDirectOttLink(p.provider_name, title)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center justify-between group/btn p-4 rounded-sm bg-zinc-950 border border-zinc-900 hover:border-zinc-500 transition-all duration-300 shadow-inner"
+                          className="flex items-center justify-between group/btn p-4 rounded-md bg-zinc-900/40 border border-white/5 hover:border-white/20 hover:bg-zinc-900/80 transition-all duration-300"
                         >
                           <div className="flex items-center gap-4">
                             <img
                               src={`${IMAGE_BASE_URL}${p.logo_path}`}
-                              className="w-12 h-12 rounded-sm border border-white/5"
+                              className="w-10 h-10 rounded-md shadow-lg"
                               alt={p.provider_name}
                             />
                             <div>
-                              <p className="text-[12px] font-black text-white tracking-[0.05em] uppercase">{p.provider_name}</p>
-                              <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-[0.1em] mt-0.5 group-hover/btn:text-white transition-colors">Digital Home</p>
+                              <p className="text-[12px] font-bold text-white tracking-wide">{p.provider_name}</p>
+                              <p className="text-[9px] text-zinc-500 font-medium uppercase tracking-wider group-hover/btn:text-emerald-400 transition-colors">Stream Now</p>
                             </div>
                           </div>
-                          <div className="text-zinc-800 group-hover/btn:text-white transition-colors">
-                            <span className="text-xl">→</span>
-                          </div>
+                          <ExternalLink size={16} className="text-zinc-600 group-hover/btn:text-white transition-colors" />
                         </a>
                       ))}
                     </div>
@@ -320,48 +457,77 @@ const Detail: React.FC<{
                       href={watchLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block w-full text-center bg-white text-black py-4 rounded-sm text-[10px] font-black uppercase tracking-[0.4em] transition-all hover:bg-zinc-200 mt-4"
+                      className="flex items-center justify-center gap-2 w-full bg-white text-black py-4 rounded-md text-[10px] font-black uppercase tracking-[0.3em] transition-all hover:bg-zinc-200 mt-2 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
                     >
-                      Browse Platform
+                      <span>Visit Platform</span>
+                      <ExternalLink size={12} />
                     </a>
                   </>
                 ) : (
-                  <div className="text-center py-12 border border-dashed border-zinc-800 rounded-sm flex flex-col items-center gap-4">
-                    <div className="text-2xl animate-pulse grayscale">📡</div>
-                    <p className="text-[9px] uppercase font-black text-zinc-700 tracking-[0.3em] text-center">Identifying Streaming <br />Contracts...</p>
+                  <div className="text-center py-12 border border-dashed border-zinc-800 rounded-md flex flex-col items-center gap-3">
+                    <div className="p-3 bg-zinc-900/50 rounded-full text-zinc-600">
+                      <Tv size={24} />
+                    </div>
+                    <p className="text-[9px] uppercase font-bold text-zinc-600 tracking-[0.2em]">No Streaming <br /> Providers Found</p>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Details Box - All data verified from API mapping */}
-            <div className="bg-zinc-950 border border-zinc-900 p-8 rounded-sm space-y-10 shadow-xl">
-              <h3 className="text-zinc-600 text-[10px] uppercase font-black tracking-[0.5em]">Detailed</h3>
-              <div className="space-y-6">
-                <div className="flex justify-between items-center border-b border-zinc-900 pb-5">
-                  <span className="text-zinc-600 text-[10px] uppercase tracking-widest font-black">Runtime</span>
-                  <span className="text-white text-[12px] font-black uppercase">{runtimeStr}</span>
+            {/* Details Box - Redesigned Grid */}
+            <div className="bg-zinc-950/50 border border-zinc-900/80 p-8 rounded-lg shadow-2xl backdrop-blur-sm">
+              <h3 className="text-zinc-500 text-[10px] uppercase font-black tracking-[0.3em] mb-8">Details</h3>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Runtime */}
+                <div className="bg-zinc-900/40 p-4 rounded-md border border-white/5 flex flex-col gap-2 hover:bg-zinc-900/60 transition-colors group">
+                  <Clock size={16} className="text-zinc-600 group-hover:text-white transition-colors" />
+                  <div>
+                    <p className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Runtime</p>
+                    <p className="text-white text-sm font-bold uppercase tracking-tight">{runtimeStr}</p>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center border-b border-zinc-900 pb-5">
-                  <span className="text-zinc-600 text-[10px] uppercase tracking-widest font-black">Rating</span>
-                  <span className="text-white text-[12px] font-black uppercase border border-white/30 px-3 py-1 rounded-sm">{certification}</span>
+
+                {/* Rating / Certification */}
+                <div className="bg-zinc-900/40 p-4 rounded-md border border-white/5 flex flex-col gap-2 hover:bg-zinc-900/60 transition-colors group">
+                  <Activity size={16} className="text-zinc-600 group-hover:text-white transition-colors" />
+                  <div>
+                    <p className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Rated</p>
+                    <p className="text-white text-sm font-bold uppercase tracking-tight">{certification}</p>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center border-b border-zinc-900 pb-5">
-                  <span className="text-zinc-600 text-[10px] uppercase tracking-widest font-black">Status</span>
-                  <span className="text-white text-[12px] font-black uppercase">{data.status}</span>
+
+                {/* Status */}
+                <div className="bg-zinc-900/40 p-4 rounded-md border border-white/5 flex flex-col gap-2 hover:bg-zinc-900/60 transition-colors group">
+                  <Calendar size={16} className="text-zinc-600 group-hover:text-white transition-colors" />
+                  <div>
+                    <p className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Status</p>
+                    <p className="text-white text-sm font-bold uppercase tracking-tight">{data.status}</p>
+                  </div>
                 </div>
+
+                {/* Original Language */}
+                <div className="bg-zinc-900/40 p-4 rounded-md border border-white/5 flex flex-col gap-2 hover:bg-zinc-900/60 transition-colors group">
+                  <Languages size={16} className="text-zinc-600 group-hover:text-white transition-colors" />
+                  <div>
+                    <p className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Language</p>
+                    <p className="text-white text-sm font-bold uppercase tracking-tight truncate">
+                      {data.spoken_languages?.[0]?.english_name || 'English'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* TV Specific: Seasons */}
                 {type === 'tv' && (
-                  <>
-                    <div className="flex justify-between items-center border-b border-zinc-900 pb-5">
-                      <span className="text-zinc-600 text-[10px] uppercase tracking-widest font-black">Seasons</span>
-                      <span className="text-white text-[12px] font-black uppercase">{data.number_of_seasons}</span>
+                  <div className="bg-zinc-900/40 p-4 rounded-md border border-white/5 flex flex-col gap-2 hover:bg-zinc-900/60 transition-colors group col-span-2">
+                    <Layers size={16} className="text-zinc-600 group-hover:text-white transition-colors" />
+                    <div>
+                      <p className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Structure</p>
+                      <p className="text-white text-sm font-bold uppercase tracking-tight">{data.number_of_seasons} Seasons • {data.number_of_episodes} Episodes</p>
                     </div>
-                  </>
+                  </div>
                 )}
-                <div className="flex justify-between items-center border-b border-zinc-900 pb-5">
-                  <span className="text-zinc-600 text-[10px] uppercase tracking-widest font-black">Original Lang</span>
-                  <span className="text-white text-[12px] font-black uppercase">{data.spoken_languages?.[0]?.english_name || 'English'}</span>
-                </div>
               </div>
             </div>
           </aside>

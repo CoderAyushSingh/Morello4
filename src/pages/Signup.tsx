@@ -5,8 +5,7 @@ import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import AuthBanner from '../components/auth/AuthBanner';
 import { auth } from '../config/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-
-
+import { supabase } from '../config/supabaseClient';
 
 
 interface SignupProps {
@@ -56,19 +55,39 @@ const Signup: React.FC<SignupProps> = ({ onNavigate }) => {
         setLoading(true);
 
         try {
-            // 1. Create User
+            // 1. Create User in Firebase
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            // 2. Update Profile with Full Name
+            // 2. Update Firebase Profile with Full Name
             await updateProfile(user, {
                 displayName: fullName
             });
 
-            // 3. User Document created automatically by AuthContext
+            // 3. Create User Profile in Supabase (Hybrid Bridge)
+            // We use the same UID from Firebase as the ID in Supabase Users table
+            // IMPORTANT: For this to work, RLS must be disabled or we need a public, permissive policy for inserts
+            const newProfile = {
+                id: user.uid,
+                email: user.email,
+                username: fullName.replace(/\s+/g, '').toLowerCase() + Math.random().toString(36).substring(7),
+                first_name: fullName.split(' ')[0] || '',
+                last_name: fullName.split(' ').slice(1).join(' ') || '',
+                created_at: new Date().toISOString(),
+                bio: '',
+                social_links: { instagram: '', twitter: '', youtube: '' },
+                stats: { reviews: 0, collections: 0, followers: 0 }
+            };
 
+            const { error: supabaseError } = await supabase
+                .from('users')
+                .insert([newProfile]);
 
-            // 4. Navigate to Home
+            if (supabaseError) {
+                console.error("Supabase profile creation failed:", supabaseError);
+                // We don't block the user, as AuthContext can try to create it again on login
+            }
+
             // 4. Navigate to Home
             onNavigate('home');
         } catch (err: any) {
